@@ -4,6 +4,7 @@ import (
 	"context"
 	"go.uber.org/zap/zapcore"
 	"go_logger_reference/log"
+	"go_logger_reference/sample"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,8 +24,8 @@ func main() {
 	}
 
 	service := streamprocessor.BuildService(loggerCfg)
-
-
+	handler := sample.NewSampleHandler(defaultLogger)
+	handler.Handle(context.WithValue(context.Background(), sample.RequestIDKey, "ID123"))
 
 	go func() {
 		ch := make(chan os.Signal, 0)
