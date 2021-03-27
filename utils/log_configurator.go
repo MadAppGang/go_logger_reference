@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -15,4 +17,29 @@ func NewLoggerFromConfig(config string) *logrus.Logger {
 	//logger.SetOutput() // set output based on config
 
 	return logger
+}
+
+type ZapConfig struct {
+	Format OutputFormat
+	MinLogLevel zapcore.Level
+}
+
+type OutputFormat string
+
+const (
+	JSON OutputFormat = "json"
+	PlainText OutputFormat = "console"
+)
+
+func NewZap(config ZapConfig) (*zap.SugaredLogger, error) {
+	cfg := zap.NewProductionConfig()
+	cfg.Level = zap.NewAtomicLevelAt(config.MinLogLevel)
+	cfg.Encoding = string(config.Format)
+
+	logger, err := zap.NewProductionConfig().Build()
+	if err != nil {
+		return nil, err
+	}
+
+	return logger.Sugar(), nil
 }
