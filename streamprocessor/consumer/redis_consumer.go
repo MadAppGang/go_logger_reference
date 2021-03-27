@@ -2,18 +2,19 @@ package consumer
 
 import (
 	"context"
+	"go.uber.org/zap"
+	"go_logger_reference/log"
 
-	"github.com/sirupsen/logrus"
 	"go_logger_reference/streamprocessor/model"
-	"go_logger_reference/utils"
 )
 
-func NewRedisConsumer(config string) (Consumer, error) {
-	logger := utils.NewLoggerFromConfig(config)
+func NewRedisConsumer(config log.ZapConfig) (Consumer, error) {
+	logger, err := log.NewZap(config)
+	if err != nil {
+		return nil, err
+	}
 
-	logger.AddHook(utils.DefaultFieldHook{func() (string, interface{}) {
-		return "who", "redis-consumer"
-	}})
+	logger = logger.Named("redis-consumer")
 
 	return &redisConsumer{
 		logger: logger,
@@ -21,15 +22,12 @@ func NewRedisConsumer(config string) (Consumer, error) {
 }
 
 type redisConsumer struct {
-	logger *logrus.Logger
+	logger *zap.SugaredLogger
 }
 
 func (r *redisConsumer) Consume(ctx context.Context, unit model.TransformedUnit) error {
-	if r.logger.IsLevelEnabled(logrus.DebugLevel) {
-		r.logger.WithField("id", unit.ID).WithField("payload", unit.AgregatedPayload).Debug("unit consumed")
-	} else {
-		r.logger.WithField("id", unit.ID).Info("unit consumed")
-	}
+	r.logger.With("id", unit.ID).With("payload", unit.AgregatedPayload).Debug("consuming unit")
+	r.logger.With("id", unit.ID).Info("unit consumed")
 
 	return nil
 }

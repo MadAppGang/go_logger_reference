@@ -10,8 +10,7 @@ import (
 	"go_logger_reference/streamprocessor/transform"
 )
 
-func NewService(config string, producer producer.Producer, transformer *transform.Transformer, consumer consumer.Consumer) *Service {
-	_ = config
+func NewService(producer producer.Producer, transformer *transform.Transformer, consumer consumer.Consumer) *Service {
 	return &Service{
 		producer:    producer,
 		transformer: transformer,

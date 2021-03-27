@@ -3,18 +3,20 @@ package producer
 import (
 	"context"
 	"fmt"
+	"go.uber.org/zap"
+	"go_logger_reference/log"
 	"math/rand"
 
-	"github.com/sirupsen/logrus"
 	"go_logger_reference/streamprocessor/model"
-	"go_logger_reference/utils"
 )
 
-func NewKafkaProducer(config string) (Producer, error) {
-	logger := utils.NewLoggerFromConfig(config)
-	logger.AddHook(utils.DefaultFieldHook{AddField: func() (string, interface{}) {
-		return "who", "kafka-producer"
-	}})
+func NewKafkaProducer(config log.ZapConfig) (Producer, error) {
+	logger, err := log.NewZap(config)
+	if err != nil {
+		return nil, err
+	}
+
+	logger = logger.Named("kafka-producer")
 
 	return &kafkaProducer{
 		logger: logger,
@@ -22,7 +24,7 @@ func NewKafkaProducer(config string) (Producer, error) {
 }
 
 type kafkaProducer struct {
-	logger *logrus.Logger
+	logger *zap.SugaredLogger
 }
 
 func (p *kafkaProducer) ProduceOne(context.Context) (model.DataUnit, error) {
@@ -31,7 +33,7 @@ func (p *kafkaProducer) ProduceOne(context.Context) (model.DataUnit, error) {
 		ID:      id,
 		Payload: fmt.Sprintf("payload-%d", id),
 	}
-	p.logger.WithField("id", unit.ID).Info("unit produced")
+	p.logger.With("id", unit.ID).Info("unit produced")
 
 	return unit, nil
 }
