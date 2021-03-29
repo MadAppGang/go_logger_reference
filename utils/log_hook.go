@@ -2,17 +2,22 @@ package utils
 
 import "github.com/sirupsen/logrus"
 
-type DefaultFieldHook struct {
-	AddField func() (string, interface{})
+func LogDefaultField(name string, value interface{}) logrus.Hook {
+	return defaultFieldHook{name, value}
 }
 
-func (h DefaultFieldHook) Levels() []logrus.Level {
+type defaultFieldHook struct {
+	name  string
+	value interface{}
+}
+
+func (h defaultFieldHook) Levels() []logrus.Level {
 	return logrus.AllLevels
 }
 
-func (h DefaultFieldHook) Fire(e *logrus.Entry) error {
-	if field, value := h.AddField(); field != "" {
-		e.Data[field] = value
+func (h defaultFieldHook) Fire(e *logrus.Entry) error {
+	if h.name != "" {
+		e.Data[h.name] = h.value
 	}
 	return nil
 }

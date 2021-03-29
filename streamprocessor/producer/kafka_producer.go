@@ -12,9 +12,7 @@ import (
 
 func NewKafkaProducer(config string) (Producer, error) {
 	logger := utils.NewLoggerFromConfig(config)
-	logger.AddHook(utils.DefaultFieldHook{AddField: func() (string, interface{}) {
-		return "who", "kafka-producer"
-	}})
+	logger.AddHook(utils.LogDefaultField("who", "kafka-producer"))
 
 	return &kafkaProducer{
 		logger: logger,

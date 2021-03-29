@@ -11,9 +11,7 @@ import (
 func NewRedisConsumer(config string) (Consumer, error) {
 	logger := utils.NewLoggerFromConfig(config)
 
-	logger.AddHook(utils.DefaultFieldHook{func() (string, interface{}) {
-		return "who", "redis-consumer"
-	}})
+	logger.AddHook(utils.LogDefaultField("who", "redis-consumer"))
 
 	return &redisConsumer{
 		logger: logger,
@@ -24,7 +22,7 @@ type redisConsumer struct {
 	logger *logrus.Logger
 }
 
-func (r *redisConsumer) Consume(ctx context.Context, unit model.TransformedUnit) error {
+func (r *redisConsumer) Consume(_ context.Context, unit model.TransformedUnit) error {
 	if r.logger.IsLevelEnabled(logrus.DebugLevel) {
 		r.logger.WithField("id", unit.ID).WithField("payload", unit.AgregatedPayload).Debug("unit consumed")
 	} else {

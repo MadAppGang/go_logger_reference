@@ -13,6 +13,5 @@ func NewLoggerFromConfig(config string) *logrus.Logger {
 	logger.SetLevel(logrus.InfoLevel) // set log level based on config
 	//logger.SetFormatter() // set formatter based on config
 	//logger.SetOutput() // set output based on config
-
 	return logger
 }

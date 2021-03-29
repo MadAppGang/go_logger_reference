@@ -11,9 +11,7 @@ import (
 func NewTransformer(config string) (*Transformer, error) {
 	logger := utils.NewLoggerFromConfig(config)
 
-	logger.AddHook(&utils.DefaultFieldHook{func() (string, interface{}) {
-		return "who", "transformer"
-	}})
+	logger.AddHook(utils.LogDefaultField("who", "transformer"))
 
 	return &Transformer{logger: logger}, nil
 }
