@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"go_logger_reference/requestprocessor/db"
 	"go_logger_reference/requestprocessor/user"
+
+	"go.uber.org/zap"
 )
 
 func NewReportService(source *db.DBSource) *ReportService {
@@ -18,7 +19,7 @@ type ReportService struct {
 	dbSource *db.DBSource
 }
 
-func (s *ReportService) Handle(logger *logrus.Logger, w http.ResponseWriter, _ *http.Request, info *user.UserInfo) {
+func (s *ReportService) Handle(logger *zap.SugaredLogger, w http.ResponseWriter, _ *http.Request, info *user.UserInfo) {
 	if info.Role != "reporter" {
 		logger.Warnf("User tried to access report service which he has no access to")
 		http.Error(w, "Report service is for reporters ONLY", http.StatusForbidden)
@@ -29,5 +30,5 @@ func (s *ReportService) Handle(logger *logrus.Logger, w http.ResponseWriter, _ *
 	w.WriteHeader(200)
 	report := fmt.Sprintf("Affected months:\n%s\n---------------", strings.Join(reportItems, "\n"))
 	_, _ = w.Write([]byte(report))
-	logger.Infof("Report generated, %d items written", len(reportItems))
+	logger.Infow("Report generated", "len(reportItems)", len(reportItems))
 }

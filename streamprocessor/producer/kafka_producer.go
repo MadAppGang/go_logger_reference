@@ -33,7 +33,7 @@ func (p *kafkaProducer) ProduceOne(context.Context) (model.DataUnit, error) {
 		ID:      id,
 		Payload: fmt.Sprintf("payload-%d", id),
 	}
-	p.logger.With("id", unit.ID).Info("unit produced")
+	p.logger.Infow("unit produced", "id", unit.ID)
 
 	return unit, nil
 }

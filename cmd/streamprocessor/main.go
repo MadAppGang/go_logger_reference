@@ -31,7 +31,7 @@ func main() {
 		ch := make(chan os.Signal, 0)
 		signal.Notify(ch, os.Interrupt, os.Kill, syscall.SIGQUIT, syscall.SIGABRT, syscall.SIGTERM, syscall.SIGSTOP)
 		sig := <-ch
-		defaultLogger.Info("got signal %s", sig)
+		defaultLogger.Infow("got signal %s", sig)
 		cancel()
 	}()
 

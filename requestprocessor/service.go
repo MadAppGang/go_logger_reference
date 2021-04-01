@@ -3,21 +3,21 @@ package requestprocessor
 import (
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
+	"log"
 	"net/http"
 	"strings"
 	"sync/atomic"
 
-	log "github.com/sirupsen/logrus"
 	"go_logger_reference/requestprocessor/admin"
 	"go_logger_reference/requestprocessor/report"
 	"go_logger_reference/requestprocessor/user"
-	"go_logger_reference/utils"
 )
 
-func NewService(config string, reportService *report.ReportService, adminService *admin.AdminService) *Service {
+func NewService(config string, reportService *report.ReportService, adminService *admin.AdminService, logger *zap.SugaredLogger) *Service {
 	return &Service{
 		loggerConfig:  config,
-		logger:        utils.NewLoggerFromConfig(config),
+		logger:        logger,
 		reportService: reportService,
 		adminService:  adminService,
 	}
@@ -25,7 +25,7 @@ func NewService(config string, reportService *report.ReportService, adminService
 
 type Service struct {
 	nextRequetID  uint64
-	logger        *log.Logger
+	logger        *zap.SugaredLogger
 	loggerConfig  string
 	reportService *report.ReportService
 	adminService  *admin.AdminService
@@ -50,10 +50,8 @@ func (s *Service) StartListening() error {
 func (s *Service) entryPoint(w http.ResponseWriter, r *http.Request) {
 	requestID := s.getNextRequestID()
 
-	localLogger := utils.NewLoggerFromConfig(s.loggerConfig)
-	localLogger.AddHook(utils.LogDefaultField("who", "service"))
-	localLogger.AddHook(utils.LogDefaultField("requestID", requestID))
-	localLogger.WithField("url", r.URL.Path).Infof("Processing request")
+	localLogger := s.logger.With("who", "service", "requestID", requestID, "url", r.URL.Path)
+	localLogger.Infow("Processing request")
 
 	userInfo, err := oauthValidate(localLogger, r)
 	if err != nil {
@@ -66,8 +64,7 @@ func (s *Service) entryPoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	localLogger.AddHook(utils.LogDefaultField("user", userInfo.Username))
-	localLogger.AddHook(utils.LogDefaultField("role", userInfo.Role))
+	localLogger = localLogger.With("user", userInfo.Username, "role", userInfo.Role)
 
 	switch {
 	case strings.HasPrefix(r.URL.Path, "/admin/"):
@@ -81,7 +78,7 @@ func (s *Service) entryPoint(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func oauthValidate(logger *log.Logger, r *http.Request) (*user.UserInfo, error) {
+func oauthValidate(logger *zap.SugaredLogger, r *http.Request) (*user.UserInfo, error) {
 	token := r.Header.Get("token")
 	if token == "" {
 		logger.Warn("Token is absent")
@@ -95,7 +92,7 @@ func oauthValidate(logger *log.Logger, r *http.Request) (*user.UserInfo, error) 
 
 	err := json.Unmarshal([]byte(token), &tokenStruct)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to unmarshal token")
+		logger.Errorw("failed to unmarshal token", "err", err)
 		return nil, err
 	}
 
@@ -106,7 +103,7 @@ func oauthValidate(logger *log.Logger, r *http.Request) (*user.UserInfo, error) 
 
 	userInfo := &user.UserInfo{Username: tokenStruct.Username, Role: tokenStruct.Role}
 
-	logger.Infof("Successfully validated user %s, role %s", userInfo.Username, userInfo.Role)
+	logger.Infow("Successfully validated user", "username", userInfo.Username, "role", userInfo.Role)
 
 	return userInfo, nil
 }
@@ -115,12 +112,12 @@ func (s *Service) getNextRequestID() string {
 	return fmt.Sprintf("req-%d", atomic.AddUint64(&s.nextRequetID, 1))
 }
 
-func (s *Service) redirect(logger *log.Logger, w http.ResponseWriter, _ *http.Request) {
+func (s *Service) redirect(logger *zap.SugaredLogger, w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-	logger.Infof("Redirect for authorization sent")
+	logger.Info("Redirect for authorization sent")
 }
 
-func (s *Service) notFound(logger *log.Logger, w http.ResponseWriter, r *http.Request) {
+func (s *Service) notFound(logger *zap.SugaredLogger, w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
-	logger.Infof("'Page not found' sent")
+	logger.Info("'Page not found' sent")
 }

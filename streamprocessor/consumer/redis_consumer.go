@@ -26,8 +26,8 @@ type redisConsumer struct {
 }
 
 func (r *redisConsumer) Consume(ctx context.Context, unit model.TransformedUnit) error {
-	r.logger.With("id", unit.ID).With("payload", unit.AgregatedPayload).Debug("consuming unit")
-	r.logger.With("id", unit.ID).Info("unit consumed")
+	r.logger.Debugw("consuming unit", "payload", unit.AgregatedPayload, "id", unit.ID)
+	r.logger.Infow("unit consumed", "id", unit.ID)
 
 	return nil
 }

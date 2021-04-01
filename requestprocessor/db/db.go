@@ -1,6 +1,8 @@
 package db
 
-import "github.com/sirupsen/logrus"
+import (
+	"go.uber.org/zap"
+)
 
 func NewDBSource() *DBSource {
 	return &DBSource{}
@@ -9,8 +11,9 @@ func NewDBSource() *DBSource {
 type DBSource struct {
 }
 
-func (s *DBSource) SelectSomething(logger *logrus.Logger, tableName string) []string {
-	logger.WithField("table", tableName).Debug("selecting from table")
+func (s *DBSource) SelectSomething(logger *zap.SugaredLogger, tableName string) []string {
+	log := logger.With("table", tableName)
+	log.Debug("selecting from table")
 
 	extracted := []string{}
 
@@ -20,6 +23,7 @@ func (s *DBSource) SelectSomething(logger *logrus.Logger, tableName string) []st
 	case "months":
 		extracted = []string{"Jan", "Feb", "Mar"}
 	}
-	logger.WithField("table", tableName).Infof("Extracted data from table: %v", extracted)
+
+	log.Infow("Extracted data from table", "data",extracted)
 	return extracted
 }
