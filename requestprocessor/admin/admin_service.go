@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"go_logger_reference/requestprocessor/db"
 	"go_logger_reference/requestprocessor/user"
+
+	"go.uber.org/zap"
 )
 
 func NewAdminService(source *db.DBSource) *AdminService {
@@ -17,9 +18,9 @@ type AdminService struct {
 	db *db.DBSource
 }
 
-func (s *AdminService) Handle(logger *logrus.Logger, w http.ResponseWriter, _ *http.Request, info *user.UserInfo) {
+func (s *AdminService) Handle(logger *zap.SugaredLogger, w http.ResponseWriter, _ *http.Request, info *user.UserInfo) {
 	if info.Role != "admin" {
-		logger.Warnf("Admin actions not permitted")
+		logger.Warn("Admin actions not permitted")
 		http.Error(w, "Admin actions not permitted", http.StatusForbidden)
 		return
 	}
@@ -27,5 +28,5 @@ func (s *AdminService) Handle(logger *logrus.Logger, w http.ResponseWriter, _ *h
 	someList := s.db.SelectSomething(logger, "system")
 	w.WriteHeader(200)
 	_, _ = w.Write([]byte(strings.Join(someList, " | ")))
-	logger.Infof("Admin action performed")
+	logger.Info("Admin action performed")
 }
